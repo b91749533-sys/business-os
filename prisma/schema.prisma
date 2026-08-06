@@ -1,0 +1,248 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id             String          @id @default(uuid())
+  name           String
+  slug           String          @unique
+  logo           String?
+  industry       String?         @default("Technology & Services")
+  currency       String          @default("USD")
+  taxRate        Float           @default(10.0)
+  timezone       String          @default("America/New_York")
+  plan           String          @default("PRO") // PRO, ENTERPRISE, STARTER
+  subscriptionId String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  users          User[]
+  customers      Customer[]
+  deals          Deal[]
+  invoices       Invoice[]
+  services       Service[]
+  appointments   Appointment[]
+  tasks          Task[]
+  products       Product[]
+  financeRecords FinanceRecord[]
+  documents      Document[]
+  activityLogs   ActivityLog[]
+  notifications  Notification[]
+  aiSetting      AISetting?
+}
+
+model User {
+  id           String        @id @default(uuid())
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  email        String        @unique
+  name         String
+  role         String        @default("ADMIN") // ADMIN, MANAGER, EMPLOYEE
+  avatar       String?
+  department   String?       @default("General Management")
+  title        String?       @default("Senior Executive")
+  phone        String?
+  status       String        @default("ACTIVE") // ACTIVE, ON_LEAVE, INACTIVE
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  assignedTasks Task[]       @relation("TaskAssignee")
+  appointments  Appointment[] @relation("StaffAppointment")
+  documents     Document[]
+}
+
+model Customer {
+  id           String        @id @default(uuid())
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name         String
+  email        String
+  phone        String?
+  companyName  String?
+  status       String        @default("CUSTOMER") // LEAD, PROSPECT, CUSTOMER, CHURNED
+  totalSpent   Float         @default(0.0)
+  lastContact  DateTime?     @default(now())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  deals        Deal[]
+  invoices     Invoice[]
+  appointments Appointment[]
+}
+
+model Deal {
+  id          String    @id @default(uuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  title       String
+  amount      Float
+  stage       String    @default("NEW_LEAD") // NEW_LEAD, CONTACTED, PROPOSAL, WON, LOST
+  probability Int       @default(50)
+  expectedClose DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Invoice {
+  id             String        @id @default(uuid())
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  invoiceNumber  String        @unique
+  status         String        @default("PENDING") // PAID, PENDING, OVERDUE, DRAFT
+  issueDate      DateTime      @default(now())
+  dueDate        DateTime
+  subtotal       Float
+  taxAmount      Float
+  discountAmount Float         @default(0.0)
+  totalAmount    Float
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  items          InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int
+  unitPrice   Float
+  amount      Float
+}
+
+model Service {
+  id              String        @id @default(uuid())
+  companyId       String
+  company         Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  durationMinutes Int           @default(45)
+  price           Float
+  category        String        @default("Consulting")
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+
+  appointments    Appointment[]
+}
+
+model Appointment {
+  id         String   @id @default(uuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staffId    String?
+  staff      User?    @relation("StaffAppointment", fields: [staffId], references: [id], onDelete: SetNull)
+  startTime  DateTime
+  endTime    DateTime
+  status     String   @default("CONFIRMED") // CONFIRMED, COMPLETED, CANCELLED
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      String   @default("TODO") // TODO, IN_PROGRESS, REVIEW, DONE
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  assigneeId  String?
+  assignee    User?    @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  dueDate     DateTime?
+  tags        String?  @default("Core")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name          String
+  sku           String
+  category      String   @default("Hardware")
+  price         Float
+  cost          Float
+  stock         Int      @default(0)
+  minStockAlert Int      @default(5)
+  supplier      String?  @default("Global Supply Co")
+  barcode       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model FinanceRecord {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type        String   // REVENUE, EXPENSE
+  category    String   // Sales, Payroll, Marketing, Software, Office, Tax
+  amount      Float
+  date        DateTime @default(now())
+  description String
+  status      String   @default("SETTLED") // SETTLED, PENDING
+  createdAt   DateTime @default(now())
+}
+
+model Document {
+  id           String   @id @default(uuid())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name         String
+  category     String   @default("General") // Contracts, Invoices, Receipts, HR
+  size         String   @default("1.2 MB")
+  url          String?
+  mimeType     String   @default("application/pdf")
+  tags         String?  @default("Legal")
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  action      String   // INVOICE_CREATED, DEAL_WON, TASK_COMPLETED, APPOINTMENT_BOOKED
+  category    String   @default("SYSTEM")
+  description String
+  actorName   String   @default("Youssef Manssouri")
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String?
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ALERT
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AISetting {
+  id                    String   @id @default(uuid())
+  companyId             String   @unique
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  isEnabled             Boolean  @default(true)
+  autoDraftEmails       Boolean  @default(true)
+  autoSummarizeInvoices Boolean  @default(true)
+  insightsFrequency     String   @default("DAILY")
+}
