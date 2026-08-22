@@ -66,7 +66,12 @@ export default function LoginPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full gap-2" size="lg">
+            <Button type="button" onClick={() => router.push('/')} className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold" size="lg">
+              <span>Explore Live Demo Workspace</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+
+            <Button type="submit" variant="outline" className="w-full gap-2" size="sm">
               <span>Sign In to Workspace</span>
               <ArrowRight className="h-4 w-4" />
             </Button>

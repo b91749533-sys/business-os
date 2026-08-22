@@ -98,7 +98,13 @@ export function Topbar({ onOpenCommand, onOpenQuickAction }: TopbarProps) {
         </kbd>
       </button>
 
-      {/* Right Actions */}
+      {/* Center-Right: Demo Mode Indicator Badge */
+      <div className="hidden md:flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+        <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+        <span>Demo Environment — Read-Only Mode</span>
+      </div>
+
+      /* Right Actions */}
       <div className="flex items-center gap-3">
         {/* Quick Action Button */}
         <Button onClick={onOpenQuickAction} size="sm" variant="glow" className="gap-1.5">

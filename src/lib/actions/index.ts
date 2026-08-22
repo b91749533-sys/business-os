@@ -111,6 +111,24 @@ export async function getDashboardMetrics() {
 }
 
 export async function createNewCustomer(data: { name: string; email: string; companyName?: string; phone?: string }) {
+  if (process.env.DEMO_MODE === "true") {
+    return {
+      success: true,
+      isDemo: true,
+      customer: {
+        id: "demo-cust-" + Date.now(),
+        companyId: DEFAULT_COMPANY_ID,
+        name: data.name,
+        email: data.email,
+        companyName: data.companyName || "Demo Enterprise",
+        phone: data.phone || "+1 555-0199",
+        status: "LEAD",
+        totalSpent: 0.0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    };
+  }
   try {
     const customer = await db.customer.create({
       data: {
@@ -142,6 +160,23 @@ export async function createNewCustomer(data: { name: string; email: string; com
 }
 
 export async function createNewTask(data: { title: string; description?: string; priority: string; tags?: string }) {
+  if (process.env.DEMO_MODE === "true") {
+    return {
+      success: true,
+      isDemo: true,
+      task: {
+        id: "demo-task-" + Date.now(),
+        companyId: DEFAULT_COMPANY_ID,
+        title: data.title,
+        description: data.description || "",
+        priority: data.priority || "MEDIUM",
+        status: "TODO",
+        tags: data.tags || "Core",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    };
+  }
   try {
     const task = await db.task.create({
       data: {
@@ -173,6 +208,16 @@ export async function createNewTask(data: { title: string; description?: string;
 }
 
 export async function updateTaskStatus(taskId: string, newStatus: string) {
+  if (process.env.DEMO_MODE === "true") {
+    return {
+      success: true,
+      isDemo: true,
+      task: {
+        id: taskId,
+        status: newStatus,
+      },
+    };
+  }
   try {
     const task = await db.task.update({
       where: { id: taskId },
@@ -198,6 +243,34 @@ export async function createNewInvoice(data: {
     const taxAmount = subtotal * 0.1;
     const totalAmount = subtotal + taxAmount;
     const invoiceNumber = `INV-2026-${Math.floor(100 + Math.random() * 900)}`;
+
+  if (process.env.DEMO_MODE === "true") {
+    return {
+      success: true,
+      isDemo: true,
+      invoice: {
+        id: "demo-inv-" + Date.now(),
+        companyId: DEFAULT_COMPANY_ID,
+        customerId: data.customerId,
+        invoiceNumber,
+        status: "PENDING",
+        issueDate: new Date(),
+        dueDate: new Date(data.dueDate),
+        subtotal,
+        taxAmount,
+        discountAmount: 0.0,
+        totalAmount,
+        notes: data.notes || "Net 30 payment terms.",
+        items: data.items.map((i, idx) => ({
+          id: "demo-item-" + idx,
+          description: i.description,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          amount: i.quantity * i.unitPrice,
+        })),
+      },
+    };
+  }
 
     const invoice = await db.invoice.create({
       data: {
